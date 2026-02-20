@@ -2,7 +2,12 @@ import httpx
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from src.common.config import MINIMAX_API_KEY, MINIMAX_MODEL, DEMO_APP_URL
+from src.common.config import (
+    MINIMAX_API_KEY,
+    MINIMAX_MODEL,
+    MINIMAX_BASE_URL,
+    DEMO_APP_URL,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +16,7 @@ class MiniMaxClient:
     def __init__(self):
         self.api_key = MINIMAX_API_KEY
         self.model = MINIMAX_MODEL
-        self.base_url = "https://api.minimax.chat/v1"
+        self.base_url = MINIMAX_BASE_URL
 
     async def generate_plan(self, context: Dict[str, Any]) -> List[Any]:
         from src.common.models import PlanItem
