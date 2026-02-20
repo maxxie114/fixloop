@@ -1,0 +1,1 @@
+When production breaks, FixLoop detects the incident via Datadog, generates a targeted recovery test plan using MiniMax M2.5, executes the tests automatically through TestSprite, and confirms when your system is fully recovered — all without human intervention.
