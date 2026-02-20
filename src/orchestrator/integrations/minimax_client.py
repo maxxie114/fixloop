@@ -13,10 +13,12 @@ class MiniMaxClient:
         self.model = MINIMAX_MODEL
         self.base_url = "https://api.minimax.chat/v1"
 
-    async def generate_plan(self, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def generate_plan(self, context: Dict[str, Any]) -> List[Any]:
+        from src.common.models import PlanItem
+
         try:
             if not self.api_key or self.api_key == "your_minimax_api_key_here":
-                logger.warning("No MiniMax API key, using fallback plan")
+                logger.warning("No MiniMax API key, using default plan")
                 return self._fallback_plan()
 
             prompt = f"""Generate a Recovery Validation Plan as a JSON array with exactly 5 test items.
@@ -80,10 +82,12 @@ Return ONLY the JSON array. No explanation."""
 
                 import json
                 import re
+                from src.common.models import PlanItem
 
                 json_match = re.search(r"\[[\s\S]*\]", content)
                 if json_match:
-                    plan_items = json.loads(json_match.group())
+                    plan_items_data = json.loads(json_match.group())
+                    plan_items = [PlanItem(**item) for item in plan_items_data]
                     return plan_items
                 else:
                     logger.warning("Failed to parse JSON from MiniMax response")
@@ -93,78 +97,80 @@ Return ONLY the JSON array. No explanation."""
             logger.error(f"Error generating plan: {e}")
             return self._fallback_plan()
 
-    def _fallback_plan(self) -> List[Dict[str, Any]]:
+    def _fallback_plan(self) -> List[Any]:
+        from src.common.models import PlanItem, PlanItemType, Target
+
         return [
-            {
-                "test_id": "TEST-001",
-                "name": "Health Check",
-                "type": "API",
-                "priority": 1,
-                "what_it_checks": "Service health endpoint returns OK",
-                "target": {
-                    "method": "GET",
-                    "url": f"{DEMO_APP_URL}/health",
-                    "headers": {},
-                    "body_json": None,
-                },
-                "pass_criteria": "Returns 200 OK with status: ok",
-            },
-            {
-                "test_id": "TEST-002",
-                "name": "Catalog Endpoint",
-                "type": "API",
-                "priority": 2,
-                "what_it_checks": "Product catalog endpoint works",
-                "target": {
-                    "method": "GET",
-                    "url": f"{DEMO_APP_URL}/catalog",
-                    "headers": {},
-                    "body_json": None,
-                },
-                "pass_criteria": "Returns 200 OK with products array",
-            },
-            {
-                "test_id": "TEST-003",
-                "name": "Checkout Success",
-                "type": "API",
-                "priority": 3,
-                "what_it_checks": "Checkout endpoint succeeds when bug is disabled",
-                "target": {
-                    "method": "POST",
-                    "url": f"{DEMO_APP_URL}/checkout",
-                    "headers": {},
-                    "body_json": {"items": [{"id": "1", "price": 19.99}]},
-                },
-                "pass_criteria": "Returns 200 OK with order_id",
-            },
-            {
-                "test_id": "TEST-004",
-                "name": "Error Handling",
-                "type": "API",
-                "priority": 4,
-                "what_it_checks": "Checkout properly handles error scenarios",
-                "target": {
-                    "method": "POST",
-                    "url": f"{DEMO_APP_URL}/checkout",
-                    "headers": {},
-                    "body_json": {"items": []},
-                },
-                "pass_criteria": "Returns 200 OK even with empty items",
-            },
-            {
-                "test_id": "TEST-005",
-                "name": "Checkout With Bug",
-                "type": "API",
-                "priority": 5,
-                "what_it_checks": "Checkout fails gracefully when bug is enabled",
-                "target": {
-                    "method": "POST",
-                    "url": f"{DEMO_APP_URL}/checkout",
-                    "headers": {},
-                    "body_json": {"items": [{"id": "1", "price": 19.99}]},
-                },
-                "pass_criteria": "Returns 500 when bug is enabled, 200 when bug is disabled",
-            },
+            PlanItem(
+                test_id="TEST-001",
+                name="Health Check",
+                type=PlanItemType.API,
+                priority=1,
+                what_it_checks="Service health endpoint returns OK",
+                target=Target(
+                    method="GET",
+                    url=f"{DEMO_APP_URL}/health",
+                    headers={},
+                    body_json=None,
+                ),
+                pass_criteria="Returns 200 OK with status: ok",
+            ),
+            PlanItem(
+                test_id="TEST-002",
+                name="Catalog Endpoint",
+                type=PlanItemType.API,
+                priority=2,
+                what_it_checks="Product catalog endpoint works",
+                target=Target(
+                    method="GET",
+                    url=f"{DEMO_APP_URL}/catalog",
+                    headers={},
+                    body_json=None,
+                ),
+                pass_criteria="Returns 200 OK with products array",
+            ),
+            PlanItem(
+                test_id="TEST-003",
+                name="Checkout Success",
+                type=PlanItemType.API,
+                priority=3,
+                what_it_checks="Checkout endpoint succeeds when bug is disabled",
+                target=Target(
+                    method="POST",
+                    url=f"{DEMO_APP_URL}/checkout",
+                    headers={},
+                    body_json={"items": [{"id": "1", "price": 19.99}]},
+                ),
+                pass_criteria="Returns 200 OK with order_id",
+            ),
+            PlanItem(
+                test_id="TEST-004",
+                name="Error Handling",
+                type=PlanItemType.API,
+                priority=4,
+                what_it_checks="Checkout properly handles error scenarios",
+                target=Target(
+                    method="POST",
+                    url=f"{DEMO_APP_URL}/checkout",
+                    headers={},
+                    body_json={"items": []},
+                ),
+                pass_criteria="Returns 200 OK even with empty items",
+            ),
+            PlanItem(
+                test_id="TEST-005",
+                name="Checkout With Bug",
+                type=PlanItemType.API,
+                priority=5,
+                what_it_checks="Checkout fails gracefully when bug is enabled",
+                target=Target(
+                    method="POST",
+                    url=f"{DEMO_APP_URL}/checkout",
+                    headers={},
+                    body_json={"items": [{"id": "1", "price": 19.99}]},
+                ),
+                pass_criteria="Returns 500 when bug is enabled, 200 when bug is disabled",
+            ),
         ]
 
     async def generate_answer(
@@ -249,9 +255,14 @@ Provide a helpful, technical answer based on the incident context and test resul
                     return self._default_answer(question, incident_id)
 
                 data = response.json()
+                logger.info(f"MiniMax response: {data}")
                 content = (
                     data.get("choices", [{}])[0].get("message", {}).get("content", "")
                 )
+
+                if not content:
+                    logger.warning("Empty content from MiniMax API")
+                    return self._default_answer(question, incident_id)
 
                 return CopilotAnswer(
                     incident_id=incident_id,
