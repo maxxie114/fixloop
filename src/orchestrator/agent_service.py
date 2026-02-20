@@ -44,15 +44,23 @@ class AgentService:
         while self.running:
             try:
                 if state.system_status.status == StatusEnum.HEALTHY:
-                    incident = await datadog_client.detect_incident()
+                    # Check 1: Local state (from demo app bug toggle)
+                    local_error_rate = state.system_status.error_rate_5m
                     
-                    if incident and incident["incident_detected"]:
-                        logger.info(f"Incident detected: {incident['error_rate']:.2f}% error rate")
+                    # Check 2: Datadog metrics (may return empty if no APM data)
+                    dd_incident = await datadog_client.detect_incident()
+                    
+                    # Trigger incident if either local state or Datadog shows issues
+                    if local_error_rate > 0.05 or (dd_incident and dd_incident["incident_detected"]):
+                        error_rate = local_error_rate if local_error_rate > 0.05 else dd_incident.get("error_rate", 100.0)
+                        p95_latency = state.system_status.p95_latency_ms_5m if local_error_rate > 0.05 else dd_incident.get("p95_latency", 5000.0)
+                        
+                        logger.info(f"Incident detected: {error_rate:.2f}% error rate (source: {'local' if local_error_rate > 0.05 else 'datadog'})")
                         
                         await state.create_incident(
-                            title=f"Checkout Service Failure - {incident['error_rate']:.1f}% error rate",
-                            error_rate=incident["error_rate"],
-                            p95_latency=incident["p95_latency"]
+                            title=f"Checkout Service Failure - {error_rate:.1f}% error rate",
+                            error_rate=error_rate,
+                            p95_latency=p95_latency
                         )
                         
                         self.plan_generation_task = asyncio.create_task(self._generate_plan())
@@ -87,18 +95,22 @@ class AgentService:
 
     async def run_validation_tests(self, incident_id: str) -> Optional[str]:
         try:
-            if not state.current_incident or state.current_incident.incident_id != incident_id:
-                logger.error("Incident not found")
+            # Use the current active incident (don't require exact ID match)
+            if not state.current_incident:
+                logger.error("No active incident")
                 return None
             
             if not state.current_incident.plan.items:
                 logger.error("No plan items available for testing")
                 return None
             
-            logger.info("Starting validation tests...")
+            logger.info(f"Starting validation tests for {state.current_incident.incident_id}...")
             
-            plan_items = [item.model_dump() for item in state.current_incident.plan.items]
-            test_run = await testsprite_adapter.run_tests(plan_items, incident_id)
+            plan_items = [item.model_dump() if hasattr(item, 'model_dump') else item for item in state.current_incident.plan.items]
+            test_run = await testsprite_adapter.run_tests(plan_items, state.current_incident.incident_id)
+            
+            # Store the test run in state so the route and frontend can access it
+            state.current_test_run = test_run
             
             return test_run.run_id
             

@@ -100,6 +100,13 @@ class IncidentState:
             self.system_status.p95_latency_ms_5m = p95_latency
             self.system_status.updated_at = datetime.utcnow().isoformat() + "Z"
 
+            # When disabling the bug, clear any active incident and reset to HEALTHY
+            if not enabled and self.current_incident:
+                self.current_incident = None
+                self.current_test_run = None
+                self.system_status.status = StatusEnum.HEALTHY
+                self.system_status.active_incident_id = None
+
             await ws_manager.broadcast(Event.system_status(self.system_status))
             return self.system_status
 

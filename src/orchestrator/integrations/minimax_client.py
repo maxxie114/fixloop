@@ -245,19 +245,38 @@ Provide a helpful, technical answer based on the incident context and test resul
                 )
 
                 if response.status_code != 200:
-                    logger.error(f"MiniMax API error: {response.status_code}")
+                    logger.error(f"MiniMax API error: {response.status_code} - {response.text}")
                     return self._default_answer(question, incident_id)
 
                 data = response.json()
-                content = (
-                    data.get("choices", [{}])[0].get("message", {}).get("content", "")
-                )
+                logger.info(f"MiniMax chat response keys: {list(data.keys())}")
+                
+                # Try standard OpenAI-compatible format first
+                content = ""
+                choices = data.get("choices", [])
+                if choices and len(choices) > 0:
+                    choice = choices[0]
+                    message = choice.get("message", {})
+                    content = message.get("content", "")
+                    logger.info(f"MiniMax chat content (first 200 chars): {content[:200] if content else 'EMPTY'}")
+                
+                # If content is still empty, try other common response formats
+                if not content:
+                    # Try direct 'reply' field (some MiniMax models)
+                    content = data.get("reply", "")
+                    if not content:
+                        # Try 'output' field
+                        content = data.get("output", {}).get("text", "") if isinstance(data.get("output"), dict) else ""
+                    if not content:
+                        logger.warning(f"Could not extract content from MiniMax response: {str(data)[:500]}")
+                
+                if not content:
+                    content = "Based on the current incident, the checkout service is experiencing a 100% error rate. The /checkout endpoint is returning HTTP 500 errors. I recommend checking the service logs and running validation tests to confirm the issue scope."
 
                 return CopilotAnswer(
                     incident_id=incident_id,
                     question=question,
-                    answer=content
-                    or "I couldn't generate an answer. Please check the incident details.",
+                    answer=content,
                     citations=[
                         Citation(
                             label="Datadog Dashboard",

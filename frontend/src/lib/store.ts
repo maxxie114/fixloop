@@ -75,10 +75,13 @@ export const useStore = create<AppState>((set, get) => ({
         try {
             set((s) => ({ loading: { ...s.loading, action: true }, error: null }));
             const status = await api.setBug(false);
-            set((s) => ({
+            set({
                 systemStatus: status,
-                loading: { ...s.loading, action: false },
-            }));
+                incident: null,
+                testRun: null,
+                chat: [],
+                loading: { initial: false, action: false },
+            });
         } catch (e: any) {
             set((s) => ({
                 loading: { ...s.loading, action: false },
