@@ -21,7 +21,7 @@ from src.common.models import (
 )
 from src.common.ws import ws_manager
 from src.common.events import Event
-from src.common.config import DEMO_APP_URL
+from src.common.config import DEMO_APP_URL, DD_SITE
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +123,7 @@ class IncidentState:
                 evidence_links=[
                     EvidenceLink(
                         label="Datadog Dashboard",
-                        url=f"https://app.datadoghq.com/dashboard/demo-checkout",
+                        url=f"https://app.{DD_SITE}/dashboard?service=demo-checkout&env=hackathon",
                     )
                 ],
             )

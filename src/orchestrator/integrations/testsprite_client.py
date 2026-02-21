@@ -147,11 +147,23 @@ class TestSpriteAdapter:
                         "status": TestStatusEnum.PASS,
                         "details": f"HTTP {status_code} - {response.text[:100] if response.text else 'OK'}",
                     }
-                else:
+
+                pass_criteria = item.get("pass_criteria", "").lower()
+                if "404" in pass_criteria and status_code == 404:
                     return {
-                        "status": TestStatusEnum.FAIL,
-                        "details": f"HTTP {status_code} - {response.text[:100] if response.text else 'Error'}",
+                        "status": TestStatusEnum.PASS,
+                        "details": f"HTTP {status_code} - {response.text[:100] if response.text else 'Not Found'}",
                     }
+                if "400" in pass_criteria and status_code == 400:
+                    return {
+                        "status": TestStatusEnum.PASS,
+                        "details": f"HTTP {status_code} - {response.text[:100] if response.text else 'Bad Request'}",
+                    }
+
+                return {
+                    "status": TestStatusEnum.FAIL,
+                    "details": f"HTTP {status_code} - {response.text[:100] if response.text else 'Error'}",
+                }
 
         except httpx.TimeoutException:
             return {"status": TestStatusEnum.FAIL, "details": "Request timed out"}
