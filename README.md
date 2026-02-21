@@ -2,6 +2,8 @@
 
 FixLoop is an enterprise-grade autonomous recovery validation platform. It bridge the gap between **Observability** (detecting a problem) and **Resolution** (confirming a fix) by using AI to orchestrate the entire incident lifecycle.
 
+**Live Demo**: http://167.172.218.73:3000
+
 ## 🚀 The Vision
 When production breaks, you don't just need an alert; you need a **verification plan**. FixLoop detects incidents via Datadog, generates targeted tests using **MiniMax M2.5**, executes them automatically, and confirms recovery—eliminating human uncertainty in the heat of an outage.
 
