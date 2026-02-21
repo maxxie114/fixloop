@@ -2,7 +2,8 @@ import httpx
 import logging
 from datetime import datetime
 from typing import List, Dict, Any, Optional
-from src.common.config import MINIMAX_API_KEY, MINIMAX_MODEL, DEMO_APP_URL
+from src.common.config import MINIMAX_API_KEY, MINIMAX_MODEL, DEMO_APP_URL, DD_SITE, DD_SERVICE, DD_ENV
+from src.orchestrator.integrations.datadog_detection import CUSTOM_ERROR_RATE_METRIC
 
 logger = logging.getLogger(__name__)
 
@@ -279,8 +280,8 @@ Provide a helpful, technical answer based on the incident context and test resul
                     answer=content,
                     citations=[
                         Citation(
-                            label="Datadog Dashboard",
-                            url="https://app.datadoghq.com/dashboard/demo-checkout",
+                            label="Datadog Metric Explorer",
+                            url=f"https://app.{DD_SITE}/metric/explorer?query=avg%3A{CUSTOM_ERROR_RATE_METRIC}%7Bservice%3A{DD_SERVICE}%2Cenv%3A{DD_ENV}%7D&live=true",
                         )
                     ],
                     created_at=datetime.utcnow().isoformat() + "Z",

@@ -48,7 +48,15 @@ class AgentService:
                     local_error_rate = state.system_status.error_rate_5m
                     
                     # Check 2: Datadog metrics (may return empty if no APM data)
-                    dd_incident = await datadog_client.detect_incident()
+                    # We implement a suppression window: if bug was recently fixed, ignore Datadog for 60s
+                    # to allow for metric ingestion latency.
+                    dd_incident = None
+                    time_since_toggle = (datetime.utcnow() - state.last_bug_toggle_time).total_seconds()
+                    
+                    if state.bug_enabled or time_since_toggle > 60:
+                        dd_incident = await datadog_client.detect_incident()
+                    else:
+                        logger.info(f"Suppressing Datadog detection (toggle was {time_since_toggle:.1f}s ago)")
                     
                     # Trigger incident if either local state or Datadog shows issues
                     if local_error_rate > 0.05 or (dd_incident and dd_incident["incident_detected"]):

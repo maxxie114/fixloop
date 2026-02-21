@@ -21,7 +21,8 @@ from src.common.models import (
 )
 from src.common.ws import ws_manager
 from src.common.events import Event
-from src.common.config import DEMO_APP_URL
+from src.common.config import DEMO_APP_URL, DD_SITE, DD_SERVICE, DD_ENV
+from src.orchestrator.integrations.datadog_detection import CUSTOM_ERROR_RATE_METRIC
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,7 @@ class IncidentState:
         self.bug_enabled = False
         self.incident_start: Optional[datetime] = None
         self.incident_end: Optional[datetime] = None
+        self.last_bug_toggle_time: datetime = datetime.utcnow()
 
     async def set_status(
         self, status: StatusEnum, error_rate: float = None, p95_latency: float = None
@@ -72,6 +74,7 @@ class IncidentState:
 
         async with IncidentState._lock:
             self.bug_enabled = enabled
+            self.last_bug_toggle_time = datetime.utcnow()
 
             try:
                 async with httpx.AsyncClient(timeout=5.0) as client:
@@ -134,8 +137,8 @@ class IncidentState:
                 signal=signal,
                 evidence_links=[
                     EvidenceLink(
-                        label="Datadog Dashboard",
-                        url=f"https://app.datadoghq.com/dashboard/demo-checkout",
+                        label="Datadog Metric Explorer",
+                        url=f"https://app.{DD_SITE}/metric/explorer?query=avg%3A{CUSTOM_ERROR_RATE_METRIC}%7Bservice%3A{DD_SERVICE}%2Cenv%3A{DD_ENV}%7D&live=true",
                     )
                 ],
             )
