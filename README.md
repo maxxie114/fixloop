@@ -67,6 +67,12 @@ python -m src.demo_app.main
 
 ---
 
+## 🎥 Demo
+
+[![FixLoop Demo](https://img.youtube.com/vi/Snu6oeu3gUo/0.jpg)](https://youtu.be/Snu6oeu3gUo)
+
+---
+
 ## 🏆 Hackathon Highlights
 - **Real Round-Trip**: The first dashboard that uses real Datadog metrics to trigger an AI agent.
 - **Zero-Trust Recovery**: Don't just trust a "Healthy" status; prove it worth with automated tests.
