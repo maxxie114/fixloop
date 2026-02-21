@@ -8,7 +8,7 @@ from src.common.models import (
 )
 from src.orchestrator.state import state
 from src.orchestrator.agent_service import agent_service
-from src.orchestrator.integrations.minimax_client import minimax_client
+from src.orchestrator.integrations.strands_agent import strands_agent_client
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -60,7 +60,7 @@ async def get_test_run(run_id: str):
 @router.post("/api/copilot/ask", response_model=CopilotAnswer)
 async def ask_copilot(request: CopilotAskRequest):
     try:
-        return await minimax_client.generate_answer(
+        return await strands_agent_client.generate_answer(
             incident_id=request.incident_id,
             question=request.question,
             context=state.get_current_incident(),

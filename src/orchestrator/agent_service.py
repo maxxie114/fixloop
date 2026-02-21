@@ -6,7 +6,7 @@ import logging
 
 from src.common.models import StatusEnum, TestRunStatusEnum, TestStatusEnum
 from src.orchestrator.state import state
-from src.orchestrator.integrations.minimax_client import minimax_client
+from src.orchestrator.integrations.strands_agent import strands_agent_client
 from src.orchestrator.integrations.testsprite_client import testsprite_adapter
 from src.orchestrator.integrations.datadog_detection import datadog_client
 
@@ -90,7 +90,7 @@ class AgentService:
                 "top_error": "Checkout endpoint returning 500"
             }
             
-            plan_items = await minimax_client.generate_plan(context)
+            plan_items = await strands_agent_client.generate_plan(context)
             
             if state.current_incident:
                 await state.update_plan(plan_items)

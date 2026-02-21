@@ -9,7 +9,8 @@ DEMO_APP_URL = os.getenv("DEMO_APP_URL", "http://localhost:8001")
 ORCH_BASE_URL = os.getenv("ORCH_BASE_URL", "http://localhost:8000")
 
 MINIMAX_API_KEY = os.getenv("MINIMAX_API_KEY", "")
-MINIMAX_MODEL = os.getenv("MINIMAX_MODEL", "abab6.5s")
+MINIMAX_MODEL = os.getenv("MINIMAX_MODEL", "MiniMax-M2.5")
+MINIMAX_BASE_URL = os.getenv("MINIMAX_BASE_URL", "https://api.minimax.io/v1")
 
 DD_API_KEY = os.getenv("DD_API_KEY", "")
 DD_APP_KEY = os.getenv("DD_APP_KEY", "")
