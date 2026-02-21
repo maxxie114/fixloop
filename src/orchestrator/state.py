@@ -68,6 +68,8 @@ class IncidentState:
             await ws_manager.broadcast(Event.system_status(self.system_status))
 
     async def toggle_bug(self, enabled: bool) -> SystemStatus:
+        from src.orchestrator.integrations.datadog_detection import datadog_client
+
         async with IncidentState._lock:
             self.bug_enabled = enabled
 
@@ -99,6 +101,9 @@ class IncidentState:
             self.system_status.error_rate_5m = error_rate
             self.system_status.p95_latency_ms_5m = p95_latency
             self.system_status.updated_at = datetime.utcnow().isoformat() + "Z"
+
+            # Submit metrics to Datadog so detection goes through Datadog
+            await datadog_client.submit_demo_metrics(error_rate, p95_latency)
 
             # When disabling the bug, clear any active incident and reset to HEALTHY
             if not enabled and self.current_incident:
